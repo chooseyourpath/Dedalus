@@ -20,11 +20,17 @@ body {
     height              : 100%;
     overflow            : hidden;
 }
+
 a {
-    color           : #000;
+    color           :#0000EE;
     text-decoration : none;
     border-bottom   : 1px solid #aaa;
 }
+
+a:visited {
+    color           :#551A8B;
+}
+
 p {
     margin-top    : 25px;
     margin-bottom : 25px;
