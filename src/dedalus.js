@@ -46,8 +46,11 @@ var Dedalus,
     Dedalus = function (options) {
         // Ignore parsing the story source if called as prototype constructor by
         // a class inheriting from this
+        console.log("\ndebug:function(options):constructor:start");
         this.options       = options;
+        console.log("\tdebug:function(options):constructor:"+options);
         if (this.options) {
+            console.log("\tdebug:function(options):constructor:this.options= true");
             this.dedleeSource  = this.options.dedleeSource;
             this.domSource     = this.options.domSource;
             this._story        = this.options ? this.parseStory() : {};
@@ -66,6 +69,7 @@ var Dedalus,
 
         // Set global story
         story = this.generateEmptyStory();
+        console.log("debug:function(options):constructor:end");
     };
 
     /**
@@ -79,6 +83,7 @@ var Dedalus,
      *                            are not shared outside the class
      */
     Dedalus.prototype.parseStory = function () {
+        console.log("debug:parseStory");
         var _story = {
                 currentPage                 : '',
                 title                       : '',
@@ -162,6 +167,7 @@ var Dedalus,
          *                  }
          */
         function getObjects (parent) {
+            console.log("debug:getObjects");
             var objects = {};
 
             parent.find('>obj, >character').each(function () {
@@ -246,6 +252,7 @@ var Dedalus,
          *                  }
          */
         function getParagraphs (parent) {
+            console.log("debug:getParagraphs");
             var paragraphs = {};
 
             parent.find('paragraph').each(function () {
@@ -277,13 +284,15 @@ var Dedalus,
          *                  }
          */
         function getPages (parent) {
+            console.log("debug:getPages:start");
             var pages = {};
 
             parent.find('page').each(function () {
+                
                 var page = $(this),
                     id  = page.attr('id');
 
-
+                console.log("\tdebug:getPages:pages["+id+"]");
                 pages[id] = {
                     objects    : getObjects(page),
                     paragraphs : getParagraphs(page),
@@ -291,8 +300,9 @@ var Dedalus,
                 };
                 page.find('obj, paragraph, character').remove();
                 pages[id].content = doT.template(Dedalus.getRawContent(page));
-
+                
             });
+            console.log("debug:getPages:end");
             return pages;
         }
 
@@ -303,6 +313,7 @@ var Dedalus,
          * @return {String}        Id of the page
          */
         function getInitialCurrentPage (parent) {
+            console.log("debug:getInitialCurrentPage");
             return parent.find('page.first').attr('id');
         }
 
@@ -337,26 +348,39 @@ var Dedalus,
         // If the story is in dadlee format, first convert it into the normal
         // HTML-like format
         if (this.dedleeSource) {
+            console.log ("\tif (this.dedleeSource):parseDedlee");
             this.parseDedlee(this.dedleeSource, this.domSource);
         }
 
         // Make a temporary copy of domSource so that the destructive process
         // of parsing it can be restored
+        console.log("\tdebug:create a temporaryDomSourceCopy");
         temporaryDomSourceCopy = this.domSource.children().clone(true);
 
 
         // Prepare _story and returns it
+        console.log("\tdebug:prepare _story_ and returns it");
+        console.log("\tdebug:about to load currentPage from the dom");
         _story.currentPage    = getInitialCurrentPage(this.domSource);
+        console.log("\tabout to getInitScript into story.initialization");
         _story.initialization = getInitScript(this.domSource);
+        console.log("\tdebug:about to load intro")
         _story.intro          = getIntroLocal(this.domSource);
+        console.log("\tdebug:about load inventory");
         _story.inventory      = getInitialInventory(this.domSource);
+        console.log("\tdebug:about to load objects");
         _story.objects        = getObjects(this.domSource);
+        console.log("\tdebug:about to load pages");
         _story.pages          = getPages(this.domSource);
+        console.log("\tdebug:about to load paragraphs");
         _story.paragraphs     = getParagraphs(this.domSource);
+        console.log("\tdebug:about to load title");
         _story.title          = getTitleLocal(this.domSource);
+        console.log("\tdebug:about to setBeforeAfterActions");
         setBeforeAfterActions(this.domSource);
 
         // Restore untouched domSource
+        console.log("\tdebug:Restore untouched domSource");
         this.domSource.html('').append(temporaryDomSourceCopy);
         return _story;
     };
@@ -366,6 +390,7 @@ var Dedalus,
      * @return {JSON} A dictionary representing the initial "story" variable
      */
     Dedalus.prototype.generateEmptyStory = function () {
+        console.log("debug:generateEmptyStory:start with Return");
         return {
             currentPageIs                : this.currentPageIs.bind(this),
             getCurrentPageId             : this.getCurrentPageId.bind(this),
@@ -394,6 +419,7 @@ var Dedalus,
     Dedalus.prototype.print = function (content, turnPage) {
         // Saves the current application state before changin it in order to gather
         // data for the undo
+        console.log("debug:print:start");
         this.storyUndo      = jQuery.extend(true, {}, story);
         this._storyUndo     = jQuery.extend(true, {}, this._story);
         this.afterUndoSave();
@@ -406,6 +432,7 @@ var Dedalus,
 
         this._story.numTotalActions += 1;
         this._story.numActionsPerformedInPage += 1;
+        console.log("debug:print:end");
     };
 
     /**
@@ -415,12 +442,15 @@ var Dedalus,
      *                         to true
      */
     Dedalus.prototype.turnTo = function (target, noTurn) {
+        console.log("\ndebug:turnTo:start");
         var isNoTurn    = noTurn || false,
             pageToPrint = this.getPage(target),
             content     = pageToPrint.content;
+            console.log("\t:turnto:content="+content);
 
         this.executeBeforeEveryPageTurn();
 
+        //dave1
         if (!isNoTurn) {
             this.print(content, true);
 
@@ -439,6 +469,8 @@ var Dedalus,
         this._story.numParagraphsShownInPage  =  0;
         this._story.numActionsPerformedInPage =  0;
         this._story.numPagesTurned            += 1;
+
+        console.log("debug:turnTo:end");
     };
 
     /**
@@ -446,6 +478,7 @@ var Dedalus,
      * @param  {String} target Id of the paragraph to present
      */
     Dedalus.prototype.showParagraph = function (target) {
+        console.log("\ndebug:showParagraph:start");
         var paragraphToPrint = this.getParagraph(target),
             content          = paragraphToPrint.content;
 
@@ -458,6 +491,7 @@ var Dedalus,
         // Update counters.
         this._story.numParagraphsShown       += 1;
         this._story.numParagraphsShownInPage += 1;
+        console.log("debug:showParagraph:end");
     };
 
     /**
@@ -466,6 +500,7 @@ var Dedalus,
      * @return {JSON}      Page object
      */
     Dedalus.prototype.getPage = function  (id) {
+        console.log("\ndebug:getPage(id)="+id);
         return this._story.pages[id];
     };
 
@@ -476,6 +511,7 @@ var Dedalus,
      * @return {JSON}      Object found
      */
     Dedalus.prototype.getObject = function  (id) {
+        console.log("debug:getObject");
         var maybeObject = this.getCurrentPage().objects[id];
 
         return maybeObject !== undefined ? maybeObject : this._story.objects[id];
@@ -487,6 +523,7 @@ var Dedalus,
      * @return {JSON}   Dictionary of active actions (see parseStory.getObjects)
      */
     Dedalus.prototype.getActionsForObject = function (id) {
+        console.log("debug:getActionsForObject");
         var action,
             actions = [],
             object  = this.getObject(id);
@@ -621,6 +658,7 @@ var Dedalus,
      * @return {String} Id of the current page
      */
     Dedalus.prototype.getCurrentPageId = function () {
+        console.log("debug:getCurrentPageId");
         return this._story.currentPage;
     };
 
@@ -637,6 +675,7 @@ var Dedalus,
      * @return {JSON} Page object
      */
     Dedalus.prototype.getCurrentPage = function () {
+        console.log("debug:getCurrentPage");
         return this.getPage(this._story.currentPage);
     };
 
@@ -717,6 +756,7 @@ var Dedalus,
      * save available. The check of save avaibility is implementation specific.
      */
     Dedalus.prototype.restore = function () {
+        console.log("debug:restore:start");
         var savedData   = this.getRestoreData(),
             savedStory  = savedData[0],
             saved_Story = savedData[1];
@@ -729,13 +769,14 @@ var Dedalus,
 
             this.executeRestore();
         }
-
+        console.log("debug:restore:end");
     };
 
     /**
      * Restart the execution of the story
      */
     Dedalus.prototype.reset = function () {
+        console.log("debug:reset");
         this._story = this.parseStory(this.options.domSource);
         story       = this.generateEmptyStory();
 
